@@ -102,7 +102,7 @@ flutter run -d chrome        # o -d edge, -d windows, -d <id de Android>
 |---|---|
 | Web (Microsoft Edge 158, `flutter build web` servido en `localhost`) | **Probada:** P1–P6 correctas |
 | Windows (pruebas `flutter test` con SQLite nativo vía FFI) | **Probada la capa de datos** (prueba de cerrar/reabrir archivo). La app de escritorio no se compiló: falta Visual Studio con “Desarrollo de escritorio con C++”. |
-| Android | Prevista; ver nota de compilación abajo |
+| Android | `flutter build apk --debug` compila correctamente; no se probó en dispositivo ni emulador (no había ninguno disponible) |
 | iOS, macOS, Linux | Previstas (mismo código; requieren Mac o Linux para compilar) |
 
 | ID | Acción | Resultado en web |
