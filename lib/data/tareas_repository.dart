@@ -53,7 +53,9 @@ class TareasRepository {
   }
 
   /// INSERT. Devuelve el id generado por SQLite.
-  Future<int> agregar(String titulo) {
+  /// Es `async` para que un título inválido llegue como Future con error
+  /// (y no como excepción síncrona) a quien lo invoque.
+  Future<int> agregar(String titulo) async {
     final limpio = validarTitulo(titulo);
     return _db.into(_db.tareas).insert(TareasCompanion.insert(titulo: limpio));
   }
@@ -75,8 +77,9 @@ class TareasRepository {
 
   /// DELETE por id. Devuelve true si se eliminó un registro.
   Future<bool> eliminar(int id) async {
-    final filas =
-        await (_db.delete(_db.tareas)..where((t) => t.id.equals(id))).go();
+    final filas = await (_db.delete(
+      _db.tareas,
+    )..where((t) => t.id.equals(id))).go();
     return filas > 0;
   }
 

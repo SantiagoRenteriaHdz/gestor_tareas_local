@@ -18,6 +18,7 @@ class TareasPage extends StatefulWidget {
 
 class _TareasPageState extends State<TareasPage> {
   final TextEditingController _tituloController = TextEditingController();
+  final FocusNode _tituloFocus = FocusNode();
   StreamSubscription<List<Tarea>>? _suscripcion;
 
   List<Tarea> _tareas = [];
@@ -50,6 +51,8 @@ class _TareasPageState extends State<TareasPage> {
     try {
       await widget.repositorio.agregar(_tituloController.text);
       _tituloController.clear();
+      // Mantiene el foco para poder capturar varias tareas seguidas.
+      _tituloFocus.requestFocus();
     } on TituloInvalidoException catch (e) {
       _mostrarMensaje(e.mensaje);
     } catch (e) {
@@ -118,6 +121,7 @@ class _TareasPageState extends State<TareasPage> {
   void dispose() {
     _suscripcion?.cancel();
     _tituloController.dispose();
+    _tituloFocus.dispose();
     super.dispose();
   }
 
@@ -184,11 +188,13 @@ class _TareasPageState extends State<TareasPage> {
           children: [
             TextField(
               controller: _tituloController,
+              focusNode: _tituloFocus,
               maxLength: longitudMaximaTitulo,
               decoration: const InputDecoration(
                 labelText: 'Nueva tarea',
                 border: OutlineInputBorder(),
               ),
+              textInputAction: TextInputAction.done,
               onSubmitted: (_) => _agregarTarea(),
             ),
             const SizedBox(height: 8),
@@ -219,8 +225,9 @@ class _EditarTituloDialog extends StatefulWidget {
 }
 
 class _EditarTituloDialogState extends State<_EditarTituloDialog> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.tituloInicial);
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.tituloInicial,
+  );
   String? _error;
 
   void _guardar() {
@@ -246,10 +253,7 @@ class _EditarTituloDialogState extends State<_EditarTituloDialog> {
         controller: _controller,
         autofocus: true,
         maxLength: longitudMaximaTitulo,
-        decoration: InputDecoration(
-          labelText: 'Título',
-          errorText: _error,
-        ),
+        decoration: InputDecoration(labelText: 'Título', errorText: _error),
         onSubmitted: (_) => _guardar(),
       ),
       actions: [

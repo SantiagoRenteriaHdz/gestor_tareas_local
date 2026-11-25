@@ -21,7 +21,7 @@ class AppDatabase extends _$AppDatabase {
   /// Sin argumentos abre la base persistente de la plataforma.
   /// En pruebas se puede pasar un [QueryExecutor] en memoria.
   AppDatabase([QueryExecutor? executor])
-      : super(executor ?? _abrirConexionPersistente());
+    : super(executor ?? _abrirConexionPersistente());
 
   @override
   int get schemaVersion => 1;
