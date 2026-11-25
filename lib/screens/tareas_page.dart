@@ -57,16 +57,54 @@ class _TareasPageState extends State<TareasPage> {
     }
   }
 
-  void _alternarCompletada(Tarea tarea, bool completada) {
-    _mostrarMensaje('Implementar actualización de tarea');
+  Future<void> _alternarCompletada(Tarea tarea, bool completada) async {
+    try {
+      await widget.repositorio.cambiarEstado(tarea.id, completada);
+    } catch (e) {
+      _mostrarMensaje('No se pudo actualizar la tarea: $e');
+    }
   }
 
-  void _editarTarea(Tarea tarea) {
-    _mostrarMensaje('Implementar edición de título');
+  Future<void> _editarTarea(Tarea tarea) async {
+    final nuevoTitulo = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditarTituloDialog(tituloInicial: tarea.titulo),
+    );
+    if (nuevoTitulo == null) return; // Cancelado.
+    try {
+      await widget.repositorio.editarTitulo(tarea.id, nuevoTitulo);
+    } on TituloInvalidoException catch (e) {
+      _mostrarMensaje(e.mensaje);
+    } catch (e) {
+      _mostrarMensaje('No se pudo editar la tarea: $e');
+    }
   }
 
-  void _eliminarTarea(Tarea tarea) {
-    _mostrarMensaje('Implementar eliminación de tarea');
+  Future<void> _eliminarTarea(Tarea tarea) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar tarea'),
+        content: Text('¿Eliminar "${tarea.titulo}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+    try {
+      await widget.repositorio.eliminar(tarea.id);
+      _mostrarMensaje('Tarea eliminada');
+    } catch (e) {
+      _mostrarMensaje('No se pudo eliminar la tarea: $e');
+    }
   }
 
   void _mostrarMensaje(String mensaje) {
@@ -107,7 +145,12 @@ class _TareasPageState extends State<TareasPage> {
                 }
               },
             ),
-            title: Text(tarea.titulo),
+            title: Text(
+              tarea.titulo,
+              style: tarea.completada
+                  ? const TextStyle(decoration: TextDecoration.lineThrough)
+                  : null,
+            ),
             subtitle: Text('ID: ${tarea.id}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -161,6 +204,61 @@ class _TareasPageState extends State<TareasPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Diálogo con su propio controlador para que se libere al cerrarse.
+class _EditarTituloDialog extends StatefulWidget {
+  final String tituloInicial;
+
+  const _EditarTituloDialog({required this.tituloInicial});
+
+  @override
+  State<_EditarTituloDialog> createState() => _EditarTituloDialogState();
+}
+
+class _EditarTituloDialogState extends State<_EditarTituloDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.tituloInicial);
+  String? _error;
+
+  void _guardar() {
+    try {
+      Navigator.pop(context, validarTitulo(_controller.text));
+    } on TituloInvalidoException catch (e) {
+      setState(() => _error = e.mensaje);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar título'),
+      content: TextField(
+        key: const Key('campoEditarTitulo'),
+        controller: _controller,
+        autofocus: true,
+        maxLength: longitudMaximaTitulo,
+        decoration: InputDecoration(
+          labelText: 'Título',
+          errorText: _error,
+        ),
+        onSubmitted: (_) => _guardar(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(onPressed: _guardar, child: const Text('Guardar')),
+      ],
     );
   }
 }

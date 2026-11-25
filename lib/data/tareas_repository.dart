@@ -58,6 +58,28 @@ class TareasRepository {
     return _db.into(_db.tareas).insert(TareasCompanion.insert(titulo: limpio));
   }
 
+  /// UPDATE del título por id. Devuelve true si se modificó un registro.
+  Future<bool> editarTitulo(int id, String nuevoTitulo) async {
+    final limpio = validarTitulo(nuevoTitulo);
+    final filas = await (_db.update(_db.tareas)..where((t) => t.id.equals(id)))
+        .write(TareasCompanion(titulo: Value(limpio)));
+    return filas > 0;
+  }
+
+  /// UPDATE del estado por id.
+  Future<bool> cambiarEstado(int id, bool completada) async {
+    final filas = await (_db.update(_db.tareas)..where((t) => t.id.equals(id)))
+        .write(TareasCompanion(completada: Value(completada)));
+    return filas > 0;
+  }
+
+  /// DELETE por id. Devuelve true si se eliminó un registro.
+  Future<bool> eliminar(int id) async {
+    final filas =
+        await (_db.delete(_db.tareas)..where((t) => t.id.equals(id))).go();
+    return filas > 0;
+  }
+
   Tarea _aModelo(TareaRegistro r) =>
       Tarea(id: r.id, titulo: r.titulo, completada: r.completada);
 }
